@@ -12,6 +12,9 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
 import albumentations as A
 
+BATCH_SIZE = 2
+NUM_WORKERS = 4
+
 classes = ['background', 'face_with_mask', 'mask_colorful',
                 'face_no_mask', 'face_with_mask_incorrect', 'mask_surgical',
                 'face_other_covering', 'scarf_bandana', 'eyeglasses',
@@ -102,30 +105,37 @@ class FaceMaskDetectionDataset(Dataset):
 
         return images, boxes, labels
 
-transform = A.Compose([
+train_transform = A.Compose([
     A.Resize(width=150, height=150),
     A.RandomCrop(width=128, height=128),
     A.HorizontalFlip(p=0.5),
-    A.IAAPerspective()
+    A.ShiftScaleRotate(rotate_limit=15)
     ], 
     bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels'])
 )
 
-train_dataset = FaceMaskDetectionDataset(training=True, transforms=transform)
-test_dataset = FaceMaskDetectionDataset(training=False, transforms=transform)
+test_transform = A.Compose([
+    A.Resize(width=150, height=150),
+    A.CenterCrop(width=128, height=128),
+    ], 
+    bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels'])
+)
+
+train_dataset = FaceMaskDetectionDataset(training=True, transforms=train_transform)
+test_dataset = FaceMaskDetectionDataset(training=False, transforms=test_transform)
 
 train_data_loader = DataLoader(
     train_dataset,
-    batch_size = 4,
+    batch_size = BATCH_SIZE,
     shuffle = True,
-    num_workers = 4,
+    num_workers = NUM_WORKERS,
     collate_fn=train_dataset.collate_fn
 )
 
 test_data_loader = DataLoader(
     test_dataset,
-    batch_size = 4,
+    batch_size = BATCH_SIZE,
     shuffle = False,
-    num_workers = 4,
+    num_workers = NUM_WORKERS,
     collate_fn=test_dataset.collate_fn
 )

@@ -5,4 +5,7 @@ data/submission.csv
 data/train.csv
 data/meta.json
 
+saved_models/*
+
 *__pycache__/
+.idea/
