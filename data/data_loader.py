@@ -14,6 +14,8 @@ import albumentations as A
 
 BATCH_SIZE = 2
 NUM_WORKERS = 4
+RESIZE = 300
+CROP = 256
 
 classes = ['background', 'face_with_mask', 'mask_colorful',
                 'face_no_mask', 'face_with_mask_incorrect', 'mask_surgical',
@@ -22,7 +24,7 @@ classes = ['background', 'face_with_mask', 'mask_colorful',
                 'hood', 'hat', 'goggles', 'hair_net', 'hijab_niqab',
                 'other', 'gas_mask', 'balaclava_ski_mask', 'turban']
 
-face_classes = ['face_with_mask', 'face_no_mask',
+face_classes = ['background', 'face_with_mask', 'face_no_mask',
                 'face_with_mask_incorrect', 'face_other_covering']
 
 class FaceMaskDetectionDataset(Dataset):
@@ -106,8 +108,8 @@ class FaceMaskDetectionDataset(Dataset):
         return images, boxes, labels
 
 train_transform = A.Compose([
-    A.Resize(width=150, height=150),
-    A.RandomCrop(width=128, height=128),
+    A.Resize(width=RESIZE, height=RESIZE),
+    A.RandomCrop(width=CROP, height=CROP),
     A.HorizontalFlip(p=0.5),
     A.ShiftScaleRotate(rotate_limit=15)
     ], 
@@ -115,8 +117,8 @@ train_transform = A.Compose([
 )
 
 test_transform = A.Compose([
-    A.Resize(width=150, height=150),
-    A.CenterCrop(width=128, height=128),
+    A.Resize(width=RESIZE, height=RESIZE),
+    A.CenterCrop(width=CROP, height=CROP),
     ], 
     bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels'])
 )

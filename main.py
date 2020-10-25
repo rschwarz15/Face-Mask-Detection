@@ -9,12 +9,12 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import torchvision.transforms as T
 import time
 
-from util import nms
 from data.data_loader import train_data_loader, test_data_loader, face_classes
 
 SAVED_MODEL_DIR = "saved_models"
-SAVED_MODEL_NAME = "bestModel.pt"
-EPOCHS = 30
+SAVED_MODEL_FINAL_NAME = "finalModel.pt"
+SAVED_MODEL_BEST_NAME = "bestModel.pt"
+EPOCHS = 100
 LEARNING_RATE = 1e-3
 TRAIN = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -88,10 +88,10 @@ def train(epochs):
         # Save best model
         if test_loss < best_test_loss:
             best_test_loss = test_loss
-            torch.save(model.state_dict(), os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_NAME))
+            torch.save(model.state_dict(), os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME))
             new_best = f" - New Best Model"
 
-        lr_scheduler.step(test_loss)    
+        lr_scheduler.step(total_epoch_loss)    
 
         lr = round(optimizer.param_groups[0]['lr'], 10)
 
@@ -105,6 +105,8 @@ def train(epochs):
         if lr == LEARNING_RATE / 1e3:
             print("Training Finished Early on Plateau")
             break
+
+    torch.save(model.state_dict(), os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_FINAL_NAME))
 
 
 def visualise(num_images):
@@ -123,7 +125,7 @@ def visualise(num_images):
             labels = out[0]['labels'].cpu().detach()
             scores = out[0]['scores'].cpu().detach()
 
-            nms_boxes_indices, nms_count = nms(boxes=boxes, scores=scores)
+            keep = torchvision.ops.nms(boxes=boxes, scores=scores, iou_threshold=0.3)
             
             image = image[0]
             image = np.moveaxis(image.numpy(),0,2)
@@ -132,8 +134,9 @@ def visualise(num_images):
             image = T.ToPILImage()(image)
             img1 = ImageDraw.Draw(image)
 
-            for i in range(len(nms_boxes_indices)):
-                index = nms_boxes_indices[i]
+            for i in range(len(keep)):
+                index = keep[i]
+
                 box = boxes[index].numpy()
                 label = labels[index].numpy()
                 score = scores[index].numpy()
@@ -155,7 +158,7 @@ def visualise(num_images):
 
 if __name__ == "__main__":
 
-    # Faster - RCNN Model - pretrained on COCO
+    # Faster RCNN Model - pretrained on COCO
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
     num_classes = len(face_classes)
 
@@ -167,9 +170,9 @@ if __name__ == "__main__":
 
     #Retriving all trainable parameters from model (for optimizer)
     params = [p for p in model.parameters() if p.requires_grad]
-    #optimizer = torch.optim.SGD(params, lr = 5e-3, momentum = 0.9)
-    optimizer = torch.optim.Adam(params, lr = LEARNING_RATE)
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=3)
+    optimizer = torch.optim.SGD(params, lr = 5e-3, momentum = 0.9)
+    #optimizer = torch.optim.Adam(params, lr = LEARNING_RATE)
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
 
     model.to(device)
 
@@ -177,8 +180,7 @@ if __name__ == "__main__":
         train(EPOCHS)
 
     # Load best network and test
-    model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_NAME)))
-    
+    model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)))
     visualise(5)
 
 
