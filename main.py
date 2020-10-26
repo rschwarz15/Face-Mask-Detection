@@ -8,15 +8,17 @@ import torch.functional as F
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import torchvision.transforms as T
 import time
+import matplotlib.pyplot as plt
 
 from data.data_loader import train_data_loader, test_data_loader, face_classes
 
 SAVED_MODEL_DIR = "saved_models"
 SAVED_MODEL_FINAL_NAME = "finalModel.pt"
 SAVED_MODEL_BEST_NAME = "bestModel.pt"
-EPOCHS = 100
+EPOCHS = 3
+OPTIMIZER = "SGD"       # SGD or ADAM
 LEARNING_RATE = 1e-3
-TRAIN = False
+TRAIN = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -47,6 +49,7 @@ def train(epochs):
     train_loss_logger = []
     test_loss_logger = []
     best_test_loss = 999
+    begin_train_time = time.time()
 
     for epoch in range(epochs):
         model.train()
@@ -104,9 +107,44 @@ def train(epochs):
 
         if lr == LEARNING_RATE / 1e3:
             print("Training Finished Early on Plateau")
-            break
+            full_training_time = time.time() - begin_train_time
+            print(f'Training took {full_training_time // 60} minutes and {full_training_time - (full_training_time // 60) * 60} seconds')
+        break
 
+
+    # Save the final model as well
     torch.save(model.state_dict(), os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_FINAL_NAME))
+    full_training_time = time.time() - begin_train_time
+    print(f'Training took {full_training_time//60} minutes and {full_training_time - (full_training_time//60)*60} seconds')
+
+    # Return training loss and testing loss for plotting
+    return train_loss_logger, test_loss_logger
+
+def plot_loss(train_loss_array, test_loss_array):
+    min_train_loss_idx = np.argmin(train_loss_array)
+    min_train_loss = train_loss_array[min_train_loss_idx]
+    print(f"Minimum training loss - index: {min_train_loss_idx}, value : {min_train_loss:.3f}")
+
+    min_test_loss_idx = np.argmin(test_loss_array)
+    min_test_loss = test_loss_array[min_test_loss_idx]
+    print(f"Minimum test loss - index: {min_test_loss_idx}, value : {min_test_loss:.3f}")
+
+    print("Generating results")
+
+    plt.figure(figsize=(10, 10))
+
+    plt.plot(train_loss_array, label='Training')
+    plt.scatter(min_train_loss_idx, min_train_loss, s=20, c='blue', marker='d')
+
+    plt.plot(test_loss_array, label='Validation')
+    plt.scatter(min_test_loss_idx, min_test_loss, s=20, c='red', marker='d')
+
+    plt.title(
+        f"Training and Validation Loss\nEpochs: {EPOCHS} lr: {LEARNING_RATE}")
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    plt.show()
 
 
 def visualise(num_images):
@@ -170,14 +208,24 @@ if __name__ == "__main__":
 
     #Retriving all trainable parameters from model (for optimizer)
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr = 5e-3, momentum = 0.9)
-    #optimizer = torch.optim.Adam(params, lr = LEARNING_RATE)
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
 
+    # Optimizer selection
+    try:
+        if OPTIMIZER == "SGD":
+            optimizer = torch.optim.SGD(params, lr=5e-3, momentum=0.9)
+        elif OPTIMIZER == "ADAM":
+            optimizer = torch.optim.Adam(params, lr=LEARNING_RATE)
+        else:
+            raise ValueError("Please select a valid optimizer")
+    except ValueError:
+        print(ValueError)
+
+    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
     model.to(device)
 
     if TRAIN:
-        train(EPOCHS)
+        train_loss_logger, test_loss_logger = train(EPOCHS)
+        plot_loss(train_loss_logger, test_loss_logger)
 
     # Load best network and test
     model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)))
