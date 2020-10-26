@@ -9,15 +9,16 @@ from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import torchvision.transforms as T
 import time
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 from data.data_loader import train_data_loader, test_data_loader, face_classes
 
 SAVED_MODEL_DIR = "saved_models"
 SAVED_MODEL_FINAL_NAME = "finalModel.pt"
 SAVED_MODEL_BEST_NAME = "bestModel.pt"
-EPOCHS = 3
-OPTIMIZER = "SGD"       # SGD or ADAM
-LEARNING_RATE = 1e-3
+EPOCHS = 1            
+OPTIMIZER = "SGD"       # SGD   or ADAM
+LEARNING_RATE = 5e-3    # SGD 5e-3 ADAM 1e-4
 TRAIN = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -49,16 +50,16 @@ def train(epochs):
     train_loss_logger = []
     test_loss_logger = []
     best_test_loss = 999
-    begin_train_time = time.time()
+    training_start_time = time.time()
 
     for epoch in range(epochs):
         model.train()
-        start_time = time.time()
+        epoch_start_time = time.time()
         total_epoch_loss = 0
         new_best = ""
         
         #Retriving Mini-batch
-        for images, boxes, labels in train_data_loader:
+        for images, boxes, labels in tqdm(train_data_loader, dynamic_ncols=True):
 
             #Loading images & targets on device
             targets = []
@@ -101,24 +102,22 @@ def train(epochs):
         epoch_train_loss = total_epoch_loss / len(train_data_loader)
         train_loss_logger.append(epoch_train_loss)
         test_loss_logger.append(test_loss)
-        time_elapsed = time.time() - start_time
+        epochs_time = time.time() - epoch_start_time
 
-        print(f'Epoch [{epoch+1}/{epochs}] - lr: {lr} - Train Loss: {epoch_train_loss:.4f} - Test Loss: {test_loss:.4f} - Time: {time_elapsed:.2f}s{new_best}')
+        print(f'Epoch [{epoch+1}/{epochs}] - lr: {lr} - Train Loss: {epoch_train_loss:.4f} - Test Loss: {test_loss:.4f} - Time: {epochs_time:.2f}s{new_best}')
 
         if lr == LEARNING_RATE / 1e3:
             print("Training Finished Early on Plateau")
-            full_training_time = time.time() - begin_train_time
-            print(f'Training took {full_training_time // 60} minutes and {full_training_time - (full_training_time // 60) * 60} seconds')
-        break
-
+            break
 
     # Save the final model as well
     torch.save(model.state_dict(), os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_FINAL_NAME))
-    full_training_time = time.time() - begin_train_time
-    print(f'Training took {full_training_time//60} minutes and {full_training_time - (full_training_time//60)*60} seconds')
+    full_training_time = time.time() - training_start_time
+    print(f'Training took {int(full_training_time//60)} minutes and {full_training_time - (full_training_time//60)*60:.2f} seconds')
 
     # Return training loss and testing loss for plotting
     return train_loss_logger, test_loss_logger
+
 
 def plot_loss(train_loss_array, test_loss_array):
     min_train_loss_idx = np.argmin(train_loss_array)
@@ -210,15 +209,12 @@ if __name__ == "__main__":
     params = [p for p in model.parameters() if p.requires_grad]
 
     # Optimizer selection
-    try:
-        if OPTIMIZER == "SGD":
-            optimizer = torch.optim.SGD(params, lr=5e-3, momentum=0.9)
-        elif OPTIMIZER == "ADAM":
-            optimizer = torch.optim.Adam(params, lr=LEARNING_RATE)
-        else:
-            raise ValueError("Please select a valid optimizer")
-    except ValueError:
-        print(ValueError)
+    if OPTIMIZER == "SGD":
+        optimizer = torch.optim.SGD(params, lr=LEARNING_RATE, momentum=0.9)
+    elif OPTIMIZER == "ADAM":
+        optimizer = torch.optim.Adam(params, lr=LEARNING_RATE)
+    else:
+        raise ValueError("Please select a valid optimizer")
 
     lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
     model.to(device)

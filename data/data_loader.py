@@ -12,10 +12,10 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
 import albumentations as A
 
-BATCH_SIZE = 2
+BATCH_SIZE = 4
 NUM_WORKERS = 4
-RESIZE = 300
-CROP = 256
+RESIZE = 128
+CROP = 96
 
 classes = ['background', 'face_with_mask', 'mask_colorful',
                 'face_no_mask', 'face_with_mask_incorrect', 'mask_surgical',
@@ -46,7 +46,7 @@ class FaceMaskDetectionDataset(Dataset):
             self.image_names = os.listdir(self.images_dir)[self.unlabeled_data_size: self.unlabeled_data_size + test_size]
 
     def __len__(self):
-        return len(self.images_dir)
+        return len(self.image_names)
         
     def __getitem__(self, idx: int):
         # Get Image
@@ -66,8 +66,9 @@ class FaceMaskDetectionDataset(Dataset):
             for ann in annotations['Annotations']:
                 box = ann['BoundingBox']
                 classname = ann['classname']
+
                 # only include faces for now
-                if classname[:4] == "face":
+                if classname in face_classes:
                     boxes.append(box)
                     labels.append(face_classes.index(classname))
         
