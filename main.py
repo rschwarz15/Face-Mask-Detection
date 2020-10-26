@@ -16,7 +16,7 @@ from data.data_loader import train_data_loader, test_data_loader, face_classes
 SAVED_MODEL_DIR = "saved_models"
 SAVED_MODEL_FINAL_NAME = "finalModel.pt"
 SAVED_MODEL_BEST_NAME = "bestModel.pt"
-EPOCHS = 1            
+EPOCHS = 10         
 OPTIMIZER = "SGD"       # SGD   or ADAM
 LEARNING_RATE = 5e-3    # SGD 5e-3 ADAM 1e-4
 TRAIN = True
@@ -68,24 +68,21 @@ def train(epochs):
             #targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
             #Forward propagation
-            try:
-                out = model(images.to(device), targets)
-                
-                losses = sum(loss for loss in out.values())
+            out = model(images.to(device), targets)
+            
+            losses = sum(loss for loss in out.values())
 
-                #Reseting Gradients
-                optimizer.zero_grad()
-                
-                #Back propagation
-                losses.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
-                optimizer.step()
-                
-                #Average loss
-                loss_value = losses.item()
-                total_epoch_loss += loss_value
-            except ValueError:
-                print("Skipped because batch with no BBs")
+            #Reseting Gradients
+            optimizer.zero_grad()
+            
+            #Back propagation
+            losses.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
+            optimizer.step()
+            
+            #Average loss
+            loss_value = losses.item()
+            total_epoch_loss += loss_value
 
         test_loss = test()
 
@@ -194,7 +191,6 @@ def visualise(num_images):
 
 
 if __name__ == "__main__":
-
     # Faster RCNN Model - pretrained on COCO
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
     num_classes = len(face_classes)

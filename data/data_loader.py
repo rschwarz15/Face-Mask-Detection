@@ -14,8 +14,8 @@ import albumentations as A
 
 BATCH_SIZE = 4
 NUM_WORKERS = 4
-RESIZE = 128
-CROP = 96
+RESIZE = 300
+CROP = 256
 
 classes = ['background', 'face_with_mask', 'mask_colorful',
                 'face_no_mask', 'face_with_mask_incorrect', 'mask_surgical',
@@ -67,8 +67,16 @@ class FaceMaskDetectionDataset(Dataset):
                 box = ann['BoundingBox']
                 classname = ann['classname']
 
-                # only include faces for now
-                if classname in face_classes:
+                # prevent zero area boxes
+                skip = False
+                if box[0] == box[2] or box[1] == box[3]:
+                    skip = True
+
+                # only include faces classes for now
+                if classname not in face_classes: 
+                    skip = True
+                    
+                if not skip:
                     boxes.append(box)
                     labels.append(face_classes.index(classname))
         
@@ -77,6 +85,11 @@ class FaceMaskDetectionDataset(Dataset):
             image = transformed['image']
             boxes = list(transformed['bboxes'])
             labels = transformed['labels'] 
+
+        # If no boxes, create a box that is the entire image and is background
+        if len(boxes) == 0:
+            boxes.append((0, 0, 1, 1))
+            labels.append(0)
 
         image = torch.tensor(image, dtype=torch.float).permute(2,0,1).contiguous()
         boxes = torch.tensor(boxes, dtype=torch.float)
@@ -112,7 +125,7 @@ train_transform = A.Compose([
     A.Resize(width=RESIZE, height=RESIZE),
     A.RandomCrop(width=CROP, height=CROP),
     A.HorizontalFlip(p=0.5),
-    A.ShiftScaleRotate(rotate_limit=15)
+    A.ShiftScaleRotate(rotate_limit=10)
     ], 
     bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels'])
 )
