@@ -16,10 +16,11 @@ from data.data_loader import train_data_loader, test_data_loader, face_classes
 SAVED_MODEL_DIR = "saved_models"
 SAVED_MODEL_FINAL_NAME = "finalModel.pt"
 SAVED_MODEL_BEST_NAME = "bestModel.pt"
-EPOCHS = 10         
+SAVE_OUTPUTS_DIR = "results/model_outputs/"
+EPOCHS = 20         
 OPTIMIZER = "SGD"       # SGD   or ADAM
 LEARNING_RATE = 5e-3    # SGD 5e-3 ADAM 1e-4
-TRAIN = True
+TRAIN = False
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -175,11 +176,12 @@ def visualise(num_images):
                 label = labels[index].numpy()
                 score = scores[index].numpy()
 
-                buffer = -11 if box[1] <= 10 else 11
+                buffer = -11 if box[1] <= 10 else 0
                 img1.rectangle(box, outline ="red")
                 img1.text([box[0], box[1] - buffer], face_classes[label])
 
-            image.show() 
+            #image.show() 
+            image.save(SAVE_OUTPUTS_DIR + f"test{count}.jpg")
             count += 1  
 
             if count == num_images:
@@ -221,6 +223,6 @@ if __name__ == "__main__":
 
     # Load best network and test
     model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)))
-    visualise(5)
+    visualise(20)
 
 
