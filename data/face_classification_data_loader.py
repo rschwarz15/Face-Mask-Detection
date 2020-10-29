@@ -12,10 +12,11 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
 import matplotlib.pyplot as plt
 
-BATCH_SIZE = 4
+BATCH_SIZE = 64
 NUM_WORKERS = 4
+IMG_SIZE = 128
 
-face_classes = ['background', 'face_with_mask', 'face_no_mask',
+face_classes = ['face_with_mask', 'face_no_mask',
                 'face_with_mask_incorrect', 'face_other_covering']
 
 class FaceMaskDetectionDataset(Dataset):
@@ -43,7 +44,7 @@ class FaceMaskDetectionDataset(Dataset):
         # Get Image
         image_path = os.path.join(self.images_dir, self.image_names[idx])
         image = Image.open(image_path)
-        image = np.array(image) / 255.0
+        image = np.array(image)
 
         # Get Annotations
         annotation_path = os.path.join(self.annotations_dir, self.image_names[idx] + ".json")
@@ -75,7 +76,6 @@ class FaceMaskDetectionDataset(Dataset):
                     labels.append(face_classes.index(classname))
 
                     image_crop = image[y1:y2+1, x1:x2+1, :] # W, H, C
-                    image_crop = torch.tensor(image_crop, dtype=torch.float).permute(2, 0, 1).contiguous()
                     image_crops.append(image_crop)
 
         if self.transforms:
@@ -108,18 +108,26 @@ def collate_fn(batch):
     # print(np.array(image_crops[0]).shape)
     # print(np.array(image_crops[1]).shape)
     
-    # if len(image_crops) > 0:
-    #     image_crops = torch.stack(image_crops, dim=0)
+    if len(image_crops) > 0:
+        image_crops = torch.stack(image_crops, dim=0)
+        labels = torch.stack(labels, dim=0)
 
     return image_crops, labels
 
 
 train_transform = T.Compose([
+    T.ToPILImage(),
     T.RandomHorizontalFlip(p=0.5),
-    #T.RandomAffine(10, 10, 10)
+    T.Resize((128, 128)),
+    T.RandomAffine(degrees=10, translate=(0.1, 0.1)),
+    T.ToTensor()
 ])
 
-test_transform = T.Compose([])
+test_transform = T.Compose([
+    T.ToPILImage(),
+    T.Resize((128, 128)),
+    T.ToTensor()
+])
 
 train_dataset = FaceMaskDetectionDataset(training=True, transforms=train_transform)
 test_dataset = FaceMaskDetectionDataset(training=False, transforms=test_transform)
@@ -140,8 +148,8 @@ test_data_loader = DataLoader(
 
 # Check counts of each class
 if __name__ == "__main__":
-    displayCounts = False
-    displayImage = True
+    displayCounts = True
+    displayImage = False
 
     loader = train_data_loader
 
@@ -168,7 +176,7 @@ if __name__ == "__main__":
             image_crop = 255 * image_crop
             image_crop = image_crop.astype(np.uint8)
             image_crop = T.ToPILImage()(image_crop)
-
+            
             plt.title(face_classes[batch_labels[i]])
             plt.imshow(image_crop)
             plt.show()

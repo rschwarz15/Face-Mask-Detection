@@ -11,17 +11,16 @@ import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from data.data_loader import train_data_loader, test_data_loader, train_data_loader_only_mask_incorrect, face_classes
+from data.face_detection_data_loader import train_data_loader, test_data_loader, face_classes
 
 SAVED_MODEL_DIR = "saved_models"
-SAVED_MODEL_FINAL_NAME = "finalModel.pt"
-SAVED_MODEL_BEST_NAME = "bestModel.pt"
+SAVED_MODEL_FINAL_NAME = "faceDetectorFinal.pt"
+SAVED_MODEL_BEST_NAME = "faceDetectorBest.pt"
 SAVE_OUTPUTS_DIR = "results/model_outputs/"
-ALL_DATA_EPOCHS = 3         
-INCORRECT_MASK_EPOCHS = 1         
+EPOCHS = 3         
 OPTIMIZER = "SGD"       # SGD   or ADAM
 SCHEDULER = "StepLR"    # Plateau or StepLR
-StepLR_SIZE = ALL_DATA_EPOCHS  # StepLR
+StepLR_SIZE = 5         # StepLR step size
 LEARNING_RATE = 5e-3    # SGD 5e-3 ADAM 1e-4
 TRAIN = True
 VISUALISE = True
@@ -46,9 +45,9 @@ def test():
         loss_value = losses.item()
         total_epoch_loss += loss_value
 
-    epoch_train_loss = total_epoch_loss / len(test_data_loader)
+    epoch_test_loss = total_epoch_loss / len(test_data_loader)
 
-    return epoch_train_loss
+    return epoch_test_loss
 
 
 def train(epochs, dataloader, train_loss_logger, test_loss_logger):
@@ -144,7 +143,7 @@ def plot_loss(train_loss_array, test_loss_array):
     plt.scatter(min_test_loss_idx, min_test_loss, s=20, c='red', marker='d')
 
     plt.title(
-        f"Training and Validation Loss\nEpochs: {ALL_DATA_EPOCHS+INCORRECT_MASK_EPOCHS} lr: {LEARNING_RATE}")
+        f"Training and Validation Loss\nEpochs: {EPOCHS} lr: {LEARNING_RATE}")
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
@@ -234,15 +233,8 @@ if __name__ == "__main__":
 
         # train on all data
         train_loss_logger, test_loss_logger = train(
-            ALL_DATA_EPOCHS, 
+            EPOCHS, 
             train_data_loader, 
-            train_loss_logger, 
-            test_loss_logger)
-
-        # train on incorrect_mask data
-        train_loss_logger, test_loss_logger = train(
-            INCORRECT_MASK_EPOCHS, 
-            train_data_loader_only_mask_incorrect, 
             train_loss_logger, 
             test_loss_logger)
 
