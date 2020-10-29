@@ -11,16 +11,20 @@ import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from data.data_loader import train_data_loader, test_data_loader, face_classes
+from data.data_loader import train_data_loader, test_data_loader, train_data_loader_only_mask_incorrect, face_classes
 
 SAVED_MODEL_DIR = "saved_models"
 SAVED_MODEL_FINAL_NAME = "finalModel.pt"
 SAVED_MODEL_BEST_NAME = "bestModel.pt"
 SAVE_OUTPUTS_DIR = "results/model_outputs/"
-EPOCHS = 20         
+ALL_DATA_EPOCHS = 3         
+INCORRECT_MASK_EPOCHS = 1         
 OPTIMIZER = "SGD"       # SGD   or ADAM
+SCHEDULER = "StepLR"    # Plateau or StepLR
+StepLR_SIZE = ALL_DATA_EPOCHS  # StepLR
 LEARNING_RATE = 5e-3    # SGD 5e-3 ADAM 1e-4
-TRAIN = False
+TRAIN = True
+VISUALISE = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -47,20 +51,21 @@ def test():
     return epoch_train_loss
 
 
-def train(epochs):
-    train_loss_logger = []
-    test_loss_logger = []
+def train(epochs, dataloader, train_loss_logger, test_loss_logger):
     best_test_loss = 999
     training_start_time = time.time()
 
     for epoch in range(epochs):
         model.train()
-        epoch_start_time = time.time()
         total_epoch_loss = 0
         new_best = ""
         
         #Retriving Mini-batch
-        for images, boxes, labels in tqdm(train_data_loader, dynamic_ncols=True):
+        for images, boxes, labels in tqdm(dataloader, dynamic_ncols=True):
+
+            # To accomodate for train_dataset_only_mask_incorrect skip those with empty images 
+            if len(images) == 0:
+                continue
 
             #Loading images & targets on device
             targets = []
@@ -93,16 +98,18 @@ def train(epochs):
             torch.save(model.state_dict(), os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME))
             new_best = f" - New Best Model"
 
-        lr_scheduler.step(total_epoch_loss)    
+        if SCHEDULER == "Plateau":
+            lr_scheduler.step(total_epoch_loss) 
+        else:
+            lr_scheduler.step()   
 
         lr = round(optimizer.param_groups[0]['lr'], 10)
 
         epoch_train_loss = total_epoch_loss / len(train_data_loader)
         train_loss_logger.append(epoch_train_loss)
         test_loss_logger.append(test_loss)
-        epochs_time = time.time() - epoch_start_time
 
-        print(f'Epoch [{epoch+1}/{epochs}] - lr: {lr} - Train Loss: {epoch_train_loss:.4f} - Test Loss: {test_loss:.4f} - Time: {epochs_time:.2f}s{new_best}')
+        print(f'Epoch [{epoch+1}/{epochs}] - lr: {lr} - Train Loss: {epoch_train_loss:.4f} - Test Loss: {test_loss:.4f}{new_best}')
 
         if lr == LEARNING_RATE / 1e3:
             print("Training Finished Early on Plateau")
@@ -137,7 +144,7 @@ def plot_loss(train_loss_array, test_loss_array):
     plt.scatter(min_test_loss_idx, min_test_loss, s=20, c='red', marker='d')
 
     plt.title(
-        f"Training and Validation Loss\nEpochs: {EPOCHS} lr: {LEARNING_RATE}")
+        f"Training and Validation Loss\nEpochs: {ALL_DATA_EPOCHS+INCORRECT_MASK_EPOCHS} lr: {LEARNING_RATE}")
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
@@ -213,16 +220,37 @@ if __name__ == "__main__":
         optimizer = torch.optim.Adam(params, lr=LEARNING_RATE)
     else:
         raise ValueError("Please select a valid optimizer")
-
-    lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+    
+    if SCHEDULER == "Plateau":
+        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+    elif SCHEDULER == "StepLR":
+        lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=StepLR_SIZE)
+    else:
+        raise ValueError("Please select a valid scheduler")
     model.to(device)
 
     if TRAIN:
-        train_loss_logger, test_loss_logger = train(EPOCHS)
+        train_loss_logger, test_loss_logger = [], []
+
+        # train on all data
+        train_loss_logger, test_loss_logger = train(
+            ALL_DATA_EPOCHS, 
+            train_data_loader, 
+            train_loss_logger, 
+            test_loss_logger)
+
+        # train on incorrect_mask data
+        train_loss_logger, test_loss_logger = train(
+            INCORRECT_MASK_EPOCHS, 
+            train_data_loader_only_mask_incorrect, 
+            train_loss_logger, 
+            test_loss_logger)
+
         plot_loss(train_loss_logger, test_loss_logger)
 
-    # Load best network and test
-    model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)))
-    visualise(20)
+    if VISUALISE:
+        # Load best network and visualise
+        model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)))
+        visualise(20)
 
 
