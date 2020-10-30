@@ -12,7 +12,7 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as T
 import matplotlib.pyplot as plt
 
-BATCH_SIZE = 64
+BATCH_SIZE = 48
 NUM_WORKERS = 4
 IMG_SIZE = 128
 
