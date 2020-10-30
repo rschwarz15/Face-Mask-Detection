@@ -13,11 +13,11 @@ from tqdm import tqdm
 
 from data.face_classification_data_loader import train_data_loader, test_data_loader, face_classes
 
-SAVED_MODEL_DIR = "saved_models"
-SAVED_MODEL_FINAL_NAME = "faceClassificationFinal.pt"
-SAVED_MODEL_BEST_NAME = "faceClassificationBest.pt"
-SAVE_OUTPUTS_DIR = "results/model_outputs/"
-EPOCHS = 10        
+# SAVED_MODEL_DIR = "saved_models"
+# SAVED_MODEL_FINAL_NAME = "faceClassificationFinal.pt"
+# SAVED_MODEL_BEST_NAME = "faceClassificationBest.pt"
+# SAVE_OUTPUTS_DIR = "results/model_outputs/"
+EPOCHS = 1
 OPTIMIZER = "ADAM"      # SGD   or ADAM
 SCHEDULER = "StepLR"    # Plateau or StepLR
 StepLR_SIZE = 100       # StepLR step size
@@ -25,6 +25,23 @@ LEARNING_RATE = 1e-3    # SGD 5e-3 ADAM 1e-4
 TRAIN = False
 VISUALISE = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+SAVED_MODEL_DIR = "saved_models"
+MODEL_NAME = f"Face_Classification_{OPTIMIZER}_{SCHEDULER}_{StepLR_SIZE}_{EPOCHS}_{LEARNING_RATE}"
+SAVED_MODEL_FINAL_NAME = MODEL_NAME + "_final.pt"
+SAVED_MODEL_BEST_NAME = MODEL_NAME + "_best.pt"
+SAVE_TRAINING_GRAPHS = "results/training_graphs"
+SAVE_OUTPUTS_DIR = f"results/model_outputs/{MODEL_NAME}"
+
+# Create saved model path if it does not exist
+if not os.path.exists(SAVED_MODEL_DIR):
+    os.makedirs(SAVED_MODEL_DIR)
+
+# Create results path if it does not exist
+if not os.path.exists(SAVE_OUTPUTS_DIR):
+    os.makedirs(SAVE_OUTPUTS_DIR)
+
+
 
 
 def calculate_accuracy(fx, y):
@@ -124,7 +141,7 @@ def train(epochs, train_loss_logger=[], test_loss_logger=[], train_acc_logger=[]
     return train_loss_logger, test_loss_logger, train_acc_logger, test_acc_logger
 
 
-def plot_loss(train_loss_array, test_loss_array):
+def plot_loss(train_loss_array, test_loss_array, save=False, visual=False):
     min_train_loss_idx = np.argmin(train_loss_array)
     min_train_loss = train_loss_array[min_train_loss_idx]
     print(f"Minimum training loss - index: {min_train_loss_idx}, value : {min_train_loss:.3f}")
@@ -148,10 +165,13 @@ def plot_loss(train_loss_array, test_loss_array):
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
-    plt.show()
+    if visual:
+        plt.show()
+    if save:
+        plt.savefig(os.path.join(SAVE_TRAINING_GRAPHS, MODEL_NAME + ".png"))
 
 
-def visualise(num_images):
+def visualise(num_images, save=False, visual=False):
     count = 0
     break_outer = False
 
@@ -175,12 +195,15 @@ def visualise(num_images):
             image = T.ToPILImage()(image)
             img1 = ImageDraw.Draw(image)
 
-            print(predicted_output)
-            print(correct_label)
+            # print(predicted_output)
+            # print(correct_label)
             plt.title(f"predicted: {face_classes[predicted_output]} - correct: {face_classes[correct_label]}")
-            plt.imshow(image) 
-            plt.show()
-            #image.save(SAVE_OUTPUTS_DIR + f"test{count}.jpg")
+            plt.imshow(image)
+            if visual:
+
+                plt.show()
+            if save:
+                plt.savefig(os.path.join(SAVE_OUTPUTS_DIR, f"test_{count}.jpg"))
             count += 1  
 
             if count == num_images:
@@ -224,11 +247,11 @@ if __name__ == "__main__":
     if TRAIN:
         train_loss_logger, test_loss_logger, train_acc_logger, test_acc_logger = train(EPOCHS)
 
-        plot_loss(train_loss_logger, test_loss_logger)
+        plot_loss(train_loss_logger, test_loss_logger, visual=False, save=True)
 
     if VISUALISE:
         # Load best network and visualise
         model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)))
-        visualise(5)
+        visualise(10, visual=False, save=True)
 
 
