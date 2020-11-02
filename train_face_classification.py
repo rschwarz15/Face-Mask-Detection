@@ -17,7 +17,7 @@ from data.face_classification_data_loader import train_data_loader, test_data_lo
 # SAVED_MODEL_FINAL_NAME = "faceClassificationFinal.pt"
 # SAVED_MODEL_BEST_NAME = "faceClassificationBest.pt"
 # SAVE_OUTPUTS_DIR = "results/model_outputs/"
-EPOCHS = 8
+EPOCHS = 25
 OPTIMIZER = "SGD"      # SGD   or ADAM
 SCHEDULER = "StepLR"    # Plateau or StepLR
 StepLR_SIZE = 10       # StepLR step size
