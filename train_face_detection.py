@@ -202,7 +202,7 @@ def visualise(num_images):
 if __name__ == "__main__":
     # Faster RCNN Model - pretrained on COCO
     model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
-    num_classes = len(face_classes)
+    num_classes = len(face_classes)     # Should be 2 - backround and face
 
     # get number of input features for the classifier
     in_features = model.roi_heads.box_predictor.cls_score.in_features
