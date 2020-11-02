@@ -18,10 +18,10 @@ from data.face_classification_data_loader import train_data_loader, test_data_lo
 # SAVED_MODEL_BEST_NAME = "faceClassificationBest.pt"
 # SAVE_OUTPUTS_DIR = "results/model_outputs/"
 EPOCHS = 25
-OPTIMIZER = "ADAM"      # SGD   or ADAM
+OPTIMIZER = "SGD"      # SGD   or ADAM
 SCHEDULER = "StepLR"    # Plateau or StepLR
 StepLR_SIZE = 10       # StepLR step size
-LEARNING_RATE = 1e-3    # SGD 5e-3 ADAM 1e-4
+LEARNING_RATE = 5e-3    # SGD 5e-3 ADAM 1e-4
 TRAIN = False
 VISUALISE = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -254,6 +254,6 @@ if __name__ == "__main__":
     if VISUALISE:
         # Load best network and visualise
         model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)))
-        visualise(10, visual=False, save=True)
+        visualise(20, visual=False, save=True)
 
 
