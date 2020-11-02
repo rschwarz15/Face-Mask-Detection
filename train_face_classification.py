@@ -18,17 +18,17 @@ from data.face_classification_data_loader import train_data_loader, test_data_lo
 # SAVED_MODEL_FINAL_NAME = "faceClassificationFinal.pt"
 # SAVED_MODEL_BEST_NAME = "faceClassificationBest.pt"
 # SAVE_OUTPUTS_DIR = "results/model_outputs/"
-EPOCHS = 25
+EPOCHS = 50
 OPTIMIZER = "SGD"      # SGD   or ADAM
-SCHEDULER = "StepLR"    # Plateau or StepLR
+SCHEDULER = "Plateau"    # Plateau or StepLR
 StepLR_SIZE = 10       # StepLR step size
-LEARNING_RATE = 5e-3    # SGD 5e-3 ADAM 1e-4
+LEARNING_RATE = 1e-2    # SGD 5e-3 ADAM 1e-4
 TRAIN = True
 VISUALISE = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 SAVED_MODEL_DIR = "saved_models"
-MODEL_NAME = f"Face_Classification_{OPTIMIZER}_{SCHEDULER}_{StepLR_SIZE}_{EPOCHS}_{LEARNING_RATE}"
+MODEL_NAME = f"Face_Classification_{OPTIMIZER}_{SCHEDULER}_{EPOCHS}_{LEARNING_RATE}"
 SAVED_MODEL_FINAL_NAME = MODEL_NAME + "_final.pt"
 SAVED_MODEL_BEST_NAME = MODEL_NAME + "_best.pt"
 SAVE_TRAINING_GRAPHS = "results/training_graphs"
@@ -161,7 +161,7 @@ def plot_loss(train_loss_array, test_loss_array, save=False, visual=False):
 
     plt.title(
         f"Training and Testing Loss\n\n"
-        f"Epochs: {EPOCHS}, Optimiser: {OPTIMIZER}, LR: {LEARNING_RATE}, LR Step: {SCHEDULER}\n"
+        f"Epochs: {EPOCHS}, Optimiser: {OPTIMIZER}, LR: {LEARNING_RATE}, LR Scheduler: {SCHEDULER}\n"
         f"Minimum training loss - index: {min_train_loss_idx}, value: {min_train_loss:.3f}\n"
         f"Minimum test loss - index: {min_test_loss_idx}, value: {min_test_loss:.3f}"
     )
@@ -192,7 +192,7 @@ def plot_acc(train_acc_array, test_acc_array, save=False, visual=False):
     plt.scatter(max_train_acc_idx, max_train_acc*100, s=20, c='blue', marker='d')
 
     plt.plot(test_acc_array*100, label='Testing')
-    plt.scatter(max_train_acc_idx, max_train_acc*100, s=20, c='red', marker='d')
+    plt.scatter(max_test_acc_idx, max_test_acc*100, s=20, c='red', marker='d')
 
     plt.title(
         f"Training and Testing Accuracy\n\n"
