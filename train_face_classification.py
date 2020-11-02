@@ -10,6 +10,7 @@ import torchvision.transforms as T
 import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+plt.rcParams.update({'font.size': 12})
 
 from data.face_classification_data_loader import train_data_loader, test_data_loader, face_classes
 
@@ -22,7 +23,7 @@ OPTIMIZER = "SGD"      # SGD   or ADAM
 SCHEDULER = "StepLR"    # Plateau or StepLR
 StepLR_SIZE = 10       # StepLR step size
 LEARNING_RATE = 5e-3    # SGD 5e-3 ADAM 1e-4
-TRAIN = False
+TRAIN = True
 VISUALISE = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -159,7 +160,11 @@ def plot_loss(train_loss_array, test_loss_array, save=False, visual=False):
     plt.scatter(min_test_loss_idx, min_test_loss, s=20, c='red', marker='d')
 
     plt.title(
-        f"Training and Testing Loss\nEpochs: {EPOCHS} lr: {LEARNING_RATE}")
+        f"Training and Testing Loss\n\n"
+        f"Epochs: {EPOCHS}, Optimiser: {OPTIMIZER}, LR: {LEARNING_RATE}, LR Step: {SCHEDULER}\n"
+        f"Minimum training loss - index: {min_train_loss_idx}, value: {min_train_loss:.3f}\n"
+        f"Minimum test loss - index: {min_test_loss_idx}, value: {min_test_loss:.3f}"
+    )
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
@@ -180,17 +185,23 @@ def plot_acc(train_acc_array, test_acc_array, save=False, visual=False):
     print(f"Max test accuracy - index: {max_test_acc_idx}, value : {max_test_acc*100:.2f}%")
 
     plt.figure(figsize=(10, 10))
+    train_acc_array = np.array(train_acc_array)
+    test_acc_array = np.array(test_acc_array)
 
-    plt.plot(train_acc_array, label='Training')
+    plt.plot(train_acc_array*100, label='Training')
     plt.scatter(max_train_acc_idx, max_train_acc*100, s=20, c='blue', marker='d')
 
-    plt.plot(test_acc_array, label='Testing')
+    plt.plot(test_acc_array*100, label='Testing')
     plt.scatter(max_train_acc_idx, max_train_acc*100, s=20, c='red', marker='d')
 
     plt.title(
-        f"Training and Testing Accuracy\nEpochs: {EPOCHS} lr: {LEARNING_RATE}")
+        f"Training and Testing Accuracy\n\n"
+        f"Epochs: {EPOCHS}, Optimiser: {OPTIMIZER}, LR: {LEARNING_RATE}, LR Step: {SCHEDULER}\n"
+        f"Max training accuracy - index: {max_train_acc_idx}, value: {max_train_acc*100:.2f}%\n"
+        f"Max test accuracy - index: {max_test_acc_idx},value : {max_test_acc*100:.2f}%"
+    )
     plt.xlabel('Epoch')
-    plt.ylabel('Loss')
+    plt.ylabel('Accuracy (%)')
     plt.legend()
     if visual:
         plt.show()
@@ -224,8 +235,8 @@ def visualise(num_images, save=False, visual=False):
             image = T.ToPILImage()(image)
             img1 = ImageDraw.Draw(image)
 
-            print(f"{ctr} Predicted output: {predicted_output}")
-            print(f"{ctr} Correct output: {correct_label}")
+            # print(f"{ctr} Predicted output: {predicted_output}")
+            # print(f"{ctr} Correct output: {correct_label}")
             plt.title(f"predicted: {face_classes[predicted_output]} - correct: {face_classes[correct_label]}")
             plt.imshow(image)
             if visual:
