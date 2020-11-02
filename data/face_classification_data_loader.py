@@ -75,7 +75,7 @@ class FaceMaskDetectionDataset(Dataset):
                 if not skip:
                     labels.append(face_classes.index(classname))
 
-                    image_crop = image[y1:y2+1, x1:x2+1, :] # W, H, C
+                    image_crop = image[y1:y2+1, x1:x2+1, :] # H, W, C
                     image_crops.append(image_crop)
 
         if self.transforms:
