@@ -153,12 +153,13 @@ def plot_loss(train_loss_array, test_loss_array):
 def visualise(num_images):
     count = 0
     break_outer = False
+    model.eval()
 
     # Check it is working with a single sample image
     for images, _, _ in test_data_loader:
         for image in images:
             image = torch.unsqueeze(image, dim=0)
-            model.eval()
+
 
             out = model(image.to(device))
 

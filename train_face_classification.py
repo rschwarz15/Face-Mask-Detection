@@ -17,7 +17,7 @@ from data.face_classification_data_loader import train_data_loader, test_data_lo
 # SAVED_MODEL_FINAL_NAME = "faceClassificationFinal.pt"
 # SAVED_MODEL_BEST_NAME = "faceClassificationBest.pt"
 # SAVE_OUTPUTS_DIR = "results/model_outputs/"
-EPOCHS = 25
+EPOCHS = 8
 OPTIMIZER = "SGD"      # SGD   or ADAM
 SCHEDULER = "StepLR"    # Plateau or StepLR
 StepLR_SIZE = 10       # StepLR step size
@@ -69,7 +69,7 @@ def test():
         acc = calculate_accuracy(fx, y)     # Find Accuracy
         
         epoch_loss += loss.item()
-        epoch_acc += acc
+        epoch_acc += acc.item()
 
     return epoch_loss / len(test_data_loader), epoch_acc / len(test_data_loader)
 
@@ -99,7 +99,7 @@ def train(epochs, train_loss_logger=[], test_loss_logger=[], train_acc_logger=[]
             optimizer.step()                    # Do a single optimization step
             
             epoch_loss += loss.item()
-            epoch_acc += acc
+            epoch_acc += acc.item()
 
         epoch_loss /=  len(train_data_loader)
         epoch_acc /=  len(train_data_loader)
@@ -150,37 +150,65 @@ def plot_loss(train_loss_array, test_loss_array, save=False, visual=False):
     min_test_loss = test_loss_array[min_test_loss_idx]
     print(f"Minimum test loss - index: {min_test_loss_idx}, value : {min_test_loss:.3f}")
 
-    print("Generating results")
-
     plt.figure(figsize=(10, 10))
 
     plt.plot(train_loss_array, label='Training')
     plt.scatter(min_train_loss_idx, min_train_loss, s=20, c='blue', marker='d')
 
-    plt.plot(test_loss_array, label='Validation')
+    plt.plot(test_loss_array, label='Testing')
     plt.scatter(min_test_loss_idx, min_test_loss, s=20, c='red', marker='d')
 
     plt.title(
-        f"Training and Validation Loss\nEpochs: {EPOCHS} lr: {LEARNING_RATE}")
+        f"Training and Testing Loss\nEpochs: {EPOCHS} lr: {LEARNING_RATE}")
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
     plt.legend()
     if visual:
         plt.show()
     if save:
-        plt.savefig(os.path.join(SAVE_TRAINING_GRAPHS, MODEL_NAME + ".png"))
+        plt.savefig(os.path.join(SAVE_TRAINING_GRAPHS, MODEL_NAME + "_Loss.png"))
+        plt.close()
+
+
+def plot_acc(train_acc_array, test_acc_array, save=False, visual=False):
+    max_train_acc_idx = np.argmax(train_acc_array)
+    max_train_acc = train_acc_array[max_train_acc_idx]
+    print(f"Max training accuracy - index: {max_train_acc_idx}, value : {max_train_acc*100:.2f}%")
+
+    max_test_acc_idx = np.argmax(test_acc_array)
+    max_test_acc = test_acc_array[max_test_acc_idx]
+    print(f"Max test accuracy - index: {max_test_acc_idx}, value : {max_test_acc*100:.2f}%")
+
+    plt.figure(figsize=(10, 10))
+
+    plt.plot(train_acc_array, label='Training')
+    plt.scatter(max_train_acc_idx, max_train_acc*100, s=20, c='blue', marker='d')
+
+    plt.plot(test_acc_array, label='Testing')
+    plt.scatter(max_train_acc_idx, max_train_acc*100, s=20, c='red', marker='d')
+
+    plt.title(
+        f"Training and Testing Accuracy\nEpochs: {EPOCHS} lr: {LEARNING_RATE}")
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+    if visual:
+        plt.show()
+    if save:
+        plt.savefig(os.path.join(SAVE_TRAINING_GRAPHS, MODEL_NAME + "_Accuracy.png"))
         plt.close()
 
 
 def visualise(num_images, save=False, visual=False):
     count = 0
     break_outer = False
+    model.eval()
 
     # Check it is working with a single sample image
     for b in range(len(test_data_loader)):
         batch_images, batch_labels = next(iter(test_data_loader))
     
-        for i in range(len(batch_images)):
+        for ctr, i in enumerate(range(len(batch_images))):
             image = batch_images[i]
             correct_label = batch_labels[i]
 
@@ -196,8 +224,8 @@ def visualise(num_images, save=False, visual=False):
             image = T.ToPILImage()(image)
             img1 = ImageDraw.Draw(image)
 
-            # print(predicted_output)
-            # print(correct_label)
+            print(f"{ctr} Predicted output: {predicted_output}")
+            print(f"{ctr} Correct output: {correct_label}")
             plt.title(f"predicted: {face_classes[predicted_output]} - correct: {face_classes[correct_label]}")
             plt.imshow(image)
             if visual:
@@ -250,10 +278,12 @@ if __name__ == "__main__":
         train_loss_logger, test_loss_logger, train_acc_logger, test_acc_logger = train(EPOCHS)
 
         plot_loss(train_loss_logger, test_loss_logger, visual=False, save=True)
+        plot_acc(train_acc_logger, test_acc_logger, visual=False, save=True)
 
     if VISUALISE:
         # Load best network and visualise
         model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)))
+        print(f"Loading model: {os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)}")
         visualise(20, visual=False, save=True)
 
 
