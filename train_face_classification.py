@@ -42,9 +42,6 @@ if not os.path.exists(SAVED_MODEL_DIR):
 if not os.path.exists(SAVE_OUTPUTS_DIR):
     os.makedirs(SAVE_OUTPUTS_DIR)
 
-
-
-
 def calculate_accuracy(fx, y):
     preds = fx.max(1, keepdim=True)[1]
     correct = preds.eq(y.view_as(preds)).sum()
