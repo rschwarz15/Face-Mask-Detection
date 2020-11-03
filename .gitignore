@@ -1,11 +1,16 @@
 # Ignore Data
-data/annotations/
-data/images/
 data/submission.csv
 data/train.csv
 data/meta.json
 
-saved_models/*
+# Ignore saved models
+saved_models/
+
+# Ignore results
+results/model_outputs/
+results/training_graphs/
+
 
 *__pycache__/
 .idea/
+
