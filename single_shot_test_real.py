@@ -11,7 +11,7 @@ from data.face_detection_data_loader import face_classes
 SAVED_MODEL_DIR = "saved_models"
 SAVED_MODEL_FINAL_NAME = "finalModel.pt"
 SAVED_MODEL_BEST_NAME = "bestModel.pt"
-IMAGES_DIR = "data/darren_test/"
+IMAGES_DIR = "data/real_test_cases/"
 SAVE_OUTPUTS_DIR = "results/model_outputs/"
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

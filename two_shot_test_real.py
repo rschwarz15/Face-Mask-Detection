@@ -15,7 +15,7 @@ from data.face_classification_data_loader import face_classes
 SAVED_MODEL_DIR = "saved_models"
 SAVED_DET_NET = "faceDetectorBest.pt"
 SAVED_CLA_NET = "Face_Classification_SGD_StepLR_10_25_0.005_best.pt"
-IMAGES_DIR = "data/darren_test/"
+IMAGES_DIR = "data/real_test_cases/"
 SAVE_OUTPUTS_DIR = "results/model_outputs/"
 
 if not os.path.exists(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST")):
