@@ -20,8 +20,8 @@ from data.face_classification_data_loader import train_data_loader, test_data_lo
 # SAVE_OUTPUTS_DIR = "results/model_outputs/"
 EPOCHS = 50
 OPTIMIZER = "SGD"      # SGD   or ADAM
-SCHEDULER = "Plateau"    # Plateau or StepLR
-StepLR_SIZE = 10       # StepLR step size
+SCHEDULER = "StepLR"    # Plateau or StepLR
+StepLR_SIZE = 35       # StepLR step size
 LEARNING_RATE = 1e-2    # SGD 5e-3 ADAM 1e-4
 TRAIN = True
 VISUALISE = True
