@@ -14,12 +14,12 @@ from data.face_classification_data_loader import face_classes
 
 SAVED_MODEL_DIR = "saved_models"
 SAVED_DET_NET = "faceDetectorBest.pt"
-SAVED_CLA_NET = "Face_Classification_SGD_StepLR_10_25_0.005_best.pt"
+SAVED_CLA_NET = "Face_Classification_ADAM_StepLR_25_5e-05_best.pt"
 IMAGES_DIR = "data/real_test_cases/"
 SAVE_OUTPUTS_DIR = "results/model_outputs/"
 
-if not os.path.exists(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST")):
-    os.makedirs(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST"))
+if not os.path.exists(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST_RONEN_AGAIN")):
+    os.makedirs(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST_RONEN_AGAIN"))
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -53,6 +53,7 @@ transforms = T.Compose([
 with torch.no_grad():
     # Get outputs of model
     # model.to(device).eval()
+    ctr = 0
     for idx in range(len(image_names)):
         image_path = os.path.join(IMAGES_DIR, image_names[idx])
         image = Image.open(image_path)
@@ -89,17 +90,30 @@ with torch.no_grad():
 
             image_crop = image[:, :, y1:y2+1, x1:x2+1] # B, C, H, W
             image_crop = image_crop[0, :, :, :]
+
+
+            ####################
+            # image_crop_to_draw = np.moveaxis(image_crop.numpy(), 0, 2)
+            # image_crop_to_draw = 255 * image_crop_to_draw
+            # image_crop_to_draw = image_crop_to_draw.astype(np.uint8)
+            # image_crop_to_draw = T.ToPILImage()(image_crop_to_draw)
+            # plt.imshow(image_crop_to_draw)
+            # ctr += 1
+            # plt.savefig(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST_RONEN_AGAIN", f"single_face_{ctr}.jpg"))
+            # plt.show()
+            ####################
+
             image_crop = transforms(image_crop)
             image_crop = torch.unsqueeze(image_crop, dim=0).to(device)
             label = torch.argmax(classificationNet(image_crop))
 
             score = scores[index].numpy()
 
-            font_size = 40
+            font_size = 60
             font = ImageFont.truetype("arial.ttf", font_size)
 
-            img1.rectangle(box, outline ="red")
+            img1.rectangle(box, outline ="red", width=2)
             img1.text([box[0], box[1]], face_classes[label], font=font)
 
         # image_to_draw.show()
-        image_to_draw.save(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST", f"realTest{idx}.jpg"))
+        image_to_draw.save(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST_RONEN_AGAIN", f"realTest{idx}.jpg"))

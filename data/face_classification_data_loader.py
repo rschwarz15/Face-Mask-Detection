@@ -42,12 +42,12 @@ class FaceMaskDetectionDataset(Dataset):
 
     def __getitem__(self, idx: int):
         # Get Image
-        image_path = os.path.join(self.images_dir, self.image_names[idx])
+        image_path = os.path.join(self.images_dir, self.image_names[idx+1])
         image = Image.open(image_path)
         image = np.array(image)
 
         # Get Annotations
-        annotation_path = os.path.join(self.annotations_dir, self.image_names[idx] + ".json")
+        annotation_path = os.path.join(self.annotations_dir, self.image_names[idx+1] + ".json")
         image_crops = []
         labels = []
 

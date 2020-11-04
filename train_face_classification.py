@@ -10,7 +10,7 @@ import torchvision.transforms as T
 import time
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-plt.rcParams.update({'font.size': 12})
+plt.rcParams.update({'font.size': 10})
 
 from data.face_classification_data_loader import train_data_loader, test_data_loader, face_classes
 
@@ -23,7 +23,7 @@ OPTIMIZER = "SGD"      # SGD   or ADAM
 SCHEDULER = "StepLR"    # Plateau or StepLR
 StepLR_SIZE = 35       # StepLR step size
 LEARNING_RATE = 1e-2    # SGD 5e-3 ADAM 1e-4
-TRAIN = True
+TRAIN = False
 VISUALISE = True
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -234,7 +234,7 @@ def visualise(num_images, save=False, visual=False):
 
             # print(f"{ctr} Predicted output: {predicted_output}")
             # print(f"{ctr} Correct output: {correct_label}")
-            plt.title(f"predicted: {face_classes[predicted_output]} - correct: {face_classes[correct_label]}")
+            plt.title(f"predicted: {face_classes[predicted_output]}\ncorrect: {face_classes[correct_label]}")
             plt.imshow(image)
             if visual:
 
@@ -292,6 +292,6 @@ if __name__ == "__main__":
         # Load best network and visualise
         model.load_state_dict(torch.load(os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)))
         print(f"Loading model: {os.path.join(SAVED_MODEL_DIR, SAVED_MODEL_BEST_NAME)}")
-        visualise(20, visual=False, save=True)
+        visualise(30, visual=False, save=True)
 
 
