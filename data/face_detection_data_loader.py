@@ -144,15 +144,15 @@ def collate_fn(batch):
 
 train_transform = A.Compose([
     A.Resize(width=RESIZE, height=RESIZE),
-    A.RandomCrop(width=CROP, height=CROP),
-    A.HorizontalFlip(p=0.5),
-    A.ShiftScaleRotate(rotate_limit=10)
+    # A.RandomCrop(width=CROP, height=CROP),
+    # A.HorizontalFlip(p=0.5),
+    # A.ShiftScaleRotate(rotate_limit=10)
 ],
     bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels']))
 
 test_transform = A.Compose([
     A.Resize(width=RESIZE, height=RESIZE),
-    A.CenterCrop(width=CROP, height=CROP),
+    # A.CenterCrop(width=CROP, height=CROP),
 ],
     bbox_params=A.BboxParams(format='pascal_voc', label_fields=['labels']))
 

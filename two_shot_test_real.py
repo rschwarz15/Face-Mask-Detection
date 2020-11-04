@@ -18,8 +18,8 @@ SAVED_CLA_NET = "Face_Classification_ADAM_StepLR_25_5e-05_best.pt"
 IMAGES_DIR = "data/real_test_cases/"
 SAVE_OUTPUTS_DIR = "results/model_outputs/"
 
-if not os.path.exists(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST_RONEN_AGAIN")):
-    os.makedirs(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST_RONEN_AGAIN"))
+if not os.path.exists(os.path.join(SAVE_OUTPUTS_DIR,"Two_Shot_Test")):
+    os.makedirs(os.path.join(SAVE_OUTPUTS_DIR,"Two_Shot_Test"))
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -113,7 +113,7 @@ with torch.no_grad():
             font = ImageFont.truetype("arial.ttf", font_size)
 
             img1.rectangle(box, outline ="red", width=2)
-            img1.text([box[0], box[1]], face_classes[label], font=font)
+            # img1.text([box[0], box[1]], face_classes[label], font=font)
 
         # image_to_draw.show()
-        image_to_draw.save(os.path.join(SAVE_OUTPUTS_DIR,"TWO_SHOT_TEST_RONEN_AGAIN", f"realTest{idx}.jpg"))
+        image_to_draw.save(os.path.join(SAVE_OUTPUTS_DIR,"Two_Shot_Test", f"realTest{idx}.jpg"))
