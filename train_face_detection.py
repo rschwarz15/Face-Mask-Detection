@@ -160,7 +160,6 @@ def visualise(num_images):
         for image in images:
             image = torch.unsqueeze(image, dim=0)
 
-
             out = model(image.to(device))
 
             boxes = out[0]['boxes'].cpu().detach()
